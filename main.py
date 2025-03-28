@@ -12,8 +12,8 @@ def load_games(filename):
 def check_game_running(games):
     for game in games:
         for process in psutil.process_iter(['name']):
-            if game.lower() in process.info['name'].lower():  # Проверяем частичное совпадение
-                return True, game
+            if game.lower() in process.info['name'].lower():  # Примерное совпадение
+                return True, process.info['name']  # Возвращаем полное имя процесса
     return False, None
 
 def notify_user(message):
@@ -21,6 +21,13 @@ def notify_user(message):
     root.withdraw()  # Скрыть главное окно
     messagebox.showwarning("Уведомление", message)
     root.destroy()
+
+def close_game(game_name):
+    for process in psutil.process_iter(['name']):
+        if game_name.lower() == process.info['name'].lower():  # Точное совпадение
+            process.kill()
+            print(f"Приложение '{game_name}' закрыто.")
+            break
 
 def main():
     games_file = 'games.txt'
@@ -35,22 +42,17 @@ def main():
             print("Игра не найдена. Ожидание...")
             time.sleep(5)  # Ждем 5 секунд перед следующей проверкой
 
-    print(f"Игра '{current_game}' запущена.")
-    
-    # Ввод времени игры сразу при старте программы
-    time_to_play = int(input("Введите время игры в минутах: ")) * 60  # Переводим в секунды
-    warning_time = 15 * 60  # 15 минут в секундах
+    print(f"Игра найдена: '{current_game}'")
 
-    total_time = time_to_play
-    while total_time > 0:
-        if total_time <= warning_time:
-            notify_user(f"Сеанс игры '{current_game}' закончится через 15 минут.")
-            time.sleep(warning_time)
-            break
-        time.sleep(60)  # Проверяем каждую минуту
-        total_time -= 60
+    time_to_play = int(input("Введите время игры в секундах: "))  # Время в секундах
 
-    print(f"Время игры '{current_game}' закончилось.")
+    while time_to_play > 0:
+        print(f"Осталось времени: {time_to_play} секунд")
+        time.sleep(1)  # Убавляем таймер каждую секунду
+        time_to_play -= 1
+
+    close_game(current_game)
+    print(f"Время игры '{current_game}' закончилось. Приложение закрыто.")
 
 if __name__ == "__main__":
     main()
